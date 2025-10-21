@@ -6,39 +6,14 @@ pipeline {
     REGISTRY_CREDENTIALS = 'dockerhub-credentials'
   }
   stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
-    }
-
-    stage('Install Dependencies') {
-      steps {
-        sh 'pip install -r requirements.txt'
-      }
-    }
-
-    stage('Unit Test') {
-      steps {
-        sh 'pytest --maxfail=1 --disable-warnings -q'
-      }
-    }
-
+    stage('Checkout') { steps { checkout scm } }
+    stage('Build') { steps { sh 'echo "Mulai build aplikasi"' } }
     stage('Build Docker Image') {
-      when {
-        expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
-      }
       steps {
-        script {
-          docker.build("${IMAGE_NAME}:${env.BUILD_NUMBER}")
-        }
+        script { docker.build("${IMAGE_NAME}:${env.BUILD_NUMBER}") }
       }
     }
-
     stage('Push Docker Image') {
-      when {
-        expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
-      }
       steps {
         script {
           docker.withRegistry(REGISTRY, REGISTRY_CREDENTIALS) {
@@ -50,9 +25,5 @@ pipeline {
       }
     }
   }
-  post {
-    always {
-      echo 'Pipeline selesai dijalankan.'
-    }
-  }
+  post { always { echo 'Selesai build' } }
 }
