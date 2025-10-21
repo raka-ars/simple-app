@@ -10,21 +10,15 @@ pipeline {
 
     stage('Checkout') {
       steps {
-        echo 'Checkout source code...'
+        echo '📦 Checkout source code dari GitHub...'
         checkout scm
       }
     }
 
-    stage('Build') {
+    stage('Build Info') {
       steps {
-        bat 'echo "Mulai build aplikasi (Windows)"'
-      }
-    }
-
-    // 🔽 Tambahan stage baru di sini
-    stage('Install Dependencies') {
-      steps {
-        bat 'python -m pip install -r requirements.txt'
+        bat 'echo "Mulai proses build pipeline (Windows Host + Docker Only)"'
+        bat 'docker --version'
       }
     }
 
@@ -32,34 +26,11 @@ pipeline {
       steps {
         withCredentials([usernamePassword(credentialsId: env.REGISTRY_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
           bat """
-            echo Login Docker sebelum build...
+            echo 🔑 Login ke Docker Hub...
             docker login -u %USER% -p %PASS%
+
+            echo 🏗️  Membuat image Docker...
             docker build -t ${env.IMAGE_NAME}:${env.BUILD_NUMBER} .
-            docker logout
-          """
-        }
-      }
-    }
 
-    stage('Push Docker Image') {
-      steps {
-        withCredentials([usernamePassword(credentialsId: env.REGISTRY_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-          bat """
-            echo Login Docker untuk push...
-            docker login -u %USER% -p %PASS%
-            docker push ${env.IMAGE_NAME}:${env.BUILD_NUMBER}
-            docker tag ${env.IMAGE_NAME}:${env.BUILD_NUMBER} ${env.IMAGE_NAME}:latest
-            docker push ${env.IMAGE_NAME}:latest
+            echo 🚪 Logout dari Docker Hub...
             docker logout
-          """
-        }
-      }
-    }
-  }
-
-  post {
-    always {
-      echo 'Selesai build pipeline.'
-    }
-  }
-}
