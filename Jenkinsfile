@@ -10,7 +10,7 @@ pipeline {
 
     stage('Checkout') {
       steps {
-        echo '📦 Checkout source code dari GitHub...'
+        echo ' Checkout source code dari GitHub...'
         checkout scm
       }
     }
@@ -26,3 +26,4 @@ pipeline {
       steps {
         withCredentials([usernamePassword(credentialsId: env.REGISTRY_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
           bat """
+
