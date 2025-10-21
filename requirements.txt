@@ -3,4 +3,4 @@ COPY . .
 EXPOSE 5000
 
 CMD ["python", "app.py"]
-pytest==8.2.0
+pytest
