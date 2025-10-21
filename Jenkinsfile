@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    IMAGE_NAME = 'rakaganteng/simple-app'              // Ganti 'awanmh' dengan username Docker Hub kalian
+    IMAGE_NAME = 'rakaganteng/simple-app'
     REGISTRY_CREDENTIALS = 'dockerhub-credentials'
   }
 
@@ -18,6 +18,13 @@ pipeline {
     stage('Build') {
       steps {
         bat 'echo "Mulai build aplikasi (Windows)"'
+      }
+    }
+
+    // 🔽 Tambahan stage baru di sini
+    stage('Install Dependencies') {
+      steps {
+        bat 'python -m pip install -r requirements.txt'
       }
     }
 
