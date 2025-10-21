@@ -13,10 +13,10 @@ pipeline {
     }
 
     stage('Install Dependencies') {
-  steps {
-    bat 'python -m pip install -r requirements.txt'
-  }
-}
+      steps {
+        sh 'pip install -r requirements.txt'
+      }
+    }
 
     stage('Unit Test') {
       steps {
@@ -56,4 +56,3 @@ pipeline {
     }
   }
 }
-
