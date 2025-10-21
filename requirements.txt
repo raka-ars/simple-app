@@ -1,4 +1,6 @@
 Flask==2.2.5
 COPY . .
 EXPOSE 5000
+
 CMD ["python", "app.py"]
+pytest==8.2.0
