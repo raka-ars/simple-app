@@ -26,11 +26,3 @@ pipeline {
       steps {
         withCredentials([usernamePassword(credentialsId: env.REGISTRY_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
           bat """
-            echo 🔑 Login ke Docker Hub...
-            docker login -u %USER% -p %PASS%
-
-            echo 🏗️  Membuat image Docker...
-            docker build -t ${env.IMAGE_NAME}:${env.BUILD_NUMBER} .
-
-            echo 🚪 Logout dari Docker Hub...
-            docker logout
