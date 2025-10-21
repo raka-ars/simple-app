@@ -1,58 +1,58 @@
 pipeline {
   agent any
-
   environment {
-    IMAGE_NAME = 'rakaganteng/simple-app'              // Ganti 'awanmh' dengan username Docker Hub kalian
+    IMAGE_NAME = 'rakaganteng/simple-app'
+    REGISTRY = 'https://index.docker.io/v1/'
     REGISTRY_CREDENTIALS = 'dockerhub-credentials'
   }
-
   stages {
-
     stage('Checkout') {
       steps {
-        echo 'Checkout source code...'
         checkout scm
       }
     }
 
-    stage('Build') {
+    stage('Install Dependencies') {
       steps {
-        bat 'echo "Mulai build aplikasi (Windows)"'
+        sh 'pip install -r requirements.txt'
+      }
+    }
+
+    stage('Unit Test') {
+      steps {
+        sh 'pytest --maxfail=1 --disable-warnings -q'
       }
     }
 
     stage('Build Docker Image') {
+      when {
+        expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+      }
       steps {
-        withCredentials([usernamePassword(credentialsId: env.REGISTRY_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-          bat """
-            echo Login Docker sebelum build...
-            docker login -u %USER% -p %PASS%
-            docker build -t ${env.IMAGE_NAME}:${env.BUILD_NUMBER} .
-            docker logout
-          """
+        script {
+          docker.build("${IMAGE_NAME}:${env.BUILD_NUMBER}")
         }
       }
     }
 
     stage('Push Docker Image') {
+      when {
+        expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+      }
       steps {
-        withCredentials([usernamePassword(credentialsId: env.REGISTRY_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-          bat """
-            echo Login Docker untuk push...
-            docker login -u %USER% -p %PASS%
-            docker push ${env.IMAGE_NAME}:${env.BUILD_NUMBER}
-            docker tag ${env.IMAGE_NAME}:${env.BUILD_NUMBER} ${env.IMAGE_NAME}:latest
-            docker push ${env.IMAGE_NAME}:latest
-            docker logout
-          """
+        script {
+          docker.withRegistry(REGISTRY, REGISTRY_CREDENTIALS) {
+            def tag = "${IMAGE_NAME}:${env.BUILD_NUMBER}"
+            docker.image(tag).push()
+            docker.image(tag).push('latest')
+          }
         }
       }
     }
   }
-
   post {
     always {
-      echo 'Selesai build pipeline.'
+      echo 'Pipeline selesai dijalankan.'
     }
   }
 }
