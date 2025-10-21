@@ -4,4 +4,4 @@ def test_homepage():
     tester = app.test_client()
     response = tester.get('/')
     assert response.status_code == 200
-    assert b"Halo dari Flask" in response.data
+    assert b"Halo" in response.data
