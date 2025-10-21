@@ -49,25 +49,23 @@ pipeline {
     }
 
     stage('Push Docker Image') {
-      steps {
-        withCredentials([usernamePassword(credentialsId: env.REGISTRY_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-          bat """
-            echo Login ke Docker Hub untuk push...
-            docker login -u %USER% -p %PASS%
-
-            echo Push image versi build...
-            docker push ${env.IMAGE_NAME}:${env.BUILD_NUMBER}
-
-            echo Tag image sebagai latest dan push ulang...
-            docker tag ${env.IMAGE_NAME}:${env.BUILD_NUMBER} ${env.IMAGE_NAME}:latest
-            docker push ${env.IMAGE_NAME}:latest
-
-            echo Logout dari Docker Hub...
-            docker logout
-          """
-        }
-      }
+  when {
+    expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+  }
+  steps {
+    withCredentials([usernamePassword(credentialsId: env.REGISTRY_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+      bat """
+        echo Login ke Docker Hub untuk push...
+        docker login -u %USER% -p %PASS%
+        docker push ${env.IMAGE_NAME}:${env.BUILD_NUMBER}
+        docker tag ${env.IMAGE_NAME}:${env.BUILD_NUMBER} ${env.IMAGE_NAME}:latest
+        docker push ${env.IMAGE_NAME}:latest
+        docker logout
+      """
     }
+  }
+}
+
 
     stage('Verify Image') {
       steps {
@@ -91,3 +89,4 @@ pipeline {
     }
   }
 }
+
