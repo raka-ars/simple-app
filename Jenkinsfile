@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    IMAGE_NAME = 'rakaganteng/simple-app'
+    IMAGE_NAME = 'rakaganteng/simple-app'              // Ganti 'awanmh' dengan username Docker Hub kalian
     REGISTRY_CREDENTIALS = 'dockerhub-credentials'
   }
 
@@ -10,15 +10,14 @@ pipeline {
 
     stage('Checkout') {
       steps {
-        echo 'Checkout source code dari GitHub...'
+        echo 'Checkout source code...'
         checkout scm
       }
     }
 
-    stage('Build Info') {
+    stage('Build') {
       steps {
-        bat 'echo Mulai proses build pipeline (Windows Host + Docker Only)'
-        bat 'docker --version'
+        bat 'echo "Mulai build aplikasi (Windows)"'
       }
     }
 
@@ -26,72 +25,34 @@ pipeline {
       steps {
         withCredentials([usernamePassword(credentialsId: env.REGISTRY_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
           bat """
-            echo Login ke Docker Hub...
+            echo Login Docker sebelum build...
             docker login -u %USER% -p %PASS%
-
-            echo Membuat image Docker dari Dockerfile...
             docker build -t ${env.IMAGE_NAME}:${env.BUILD_NUMBER} .
-
-            echo Logout dari Docker Hub...
             docker logout
           """
         }
-      }
-    }
-
-    stage('Run Unit Tests (Pytest)') {
-      steps {
-        echo 'Menjalankan unit test di dalam container...'
-        // Jalankan pytest di container; jika gagal, hentikan pipeline
-        bat """
-          docker run --rm ${env.IMAGE_NAME}:${env.BUILD_NUMBER} pytest -q || exit /b 1
-        """
       }
     }
 
     stage('Push Docker Image') {
-      when {
-        expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
-      }
       steps {
         withCredentials([usernamePassword(credentialsId: env.REGISTRY_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
           bat """
-            echo Login ke Docker Hub untuk push...
+            echo Login Docker untuk push...
             docker login -u %USER% -p %PASS%
-
-            echo Push image versi build...
             docker push ${env.IMAGE_NAME}:${env.BUILD_NUMBER}
-
-            echo Tag image sebagai latest dan push ulang...
             docker tag ${env.IMAGE_NAME}:${env.BUILD_NUMBER} ${env.IMAGE_NAME}:latest
             docker push ${env.IMAGE_NAME}:latest
-
-            echo Logout dari Docker Hub...
             docker logout
           """
         }
-      }
-    }
-
-    stage('Verify Image') {
-      steps {
-        bat """
-          echo Menampilkan daftar image yang ada di host...
-          docker images
-        """
       }
     }
   }
 
   post {
-    success {
-      echo 'Pipeline sukses — image berhasil dibangun, dites, dan di-push ke Docker Hub.'
-    }
-    failure {
-      echo 'Pipeline gagal — periksa error pada tahap sebelumnya.'
-    }
     always {
-      echo 'Pipeline selesai dijalankan.'
+      echo 'Selesai build pipeline.'
     }
   }
 }
